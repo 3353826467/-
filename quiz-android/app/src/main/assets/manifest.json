@@ -1,0 +1,19 @@
+{
+    "name": "题库大师 - 刷题背题神器",
+    "short_name": "题库大师",
+    "description": "智能刷题背题应用，支持自动识别题型、导入题库、错题本等功能",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#f3f4f6",
+    "theme_color": "#6366f1",
+    "lang": "zh-CN",
+    "icons": [
+        {
+            "src": "icons/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

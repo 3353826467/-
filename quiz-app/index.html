@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="题库大师">
+    <title>题库大师 - 刷题背题神器</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+
+        <!-- ==================== 首页 - 题库列表 ==================== -->
+        <div id="view-home" class="view active">
+            <header class="app-header">
+                <h1 class="header-title">题库大师</h1>
+                <button class="header-btn" onclick="App.showImport()" aria-label="导入题库">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </button>
+            </header>
+            <div class="content">
+                <div class="search-bar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="bank-search" placeholder="搜索题库..." oninput="App.filterBanks(this.value)">
+                </div>
+                <div id="bank-list" class="bank-list"></div>
+                <div id="bank-empty" class="empty-state" style="display:none;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    <p>还没有题库</p>
+                    <p class="empty-sub">点击右上角导入按钮创建第一个题库</p>
+                </div>
+            </div>
+            <button class="fab" onclick="App.showImport()" aria-label="新建题库">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+        </div>
+
+        <!-- ==================== 题库详情 ==================== -->
+        <div id="view-bank-detail" class="view">
+            <header class="app-header">
+                <button class="header-btn" onclick="App.backToHome()" aria-label="返回">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <h1 class="header-title" id="bank-detail-title">题库详情</h1>
+                <button class="header-btn" onclick="App.showBankMenu()" aria-label="更多">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                </button>
+            </header>
+            <div class="content">
+                <div class="bank-info-card" id="bank-info-card">
+                    <div class="bank-info-stats">
+                        <div class="stat-item">
+                            <span class="stat-num" id="bank-q-count">0</span>
+                            <span class="stat-label">题目</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-num" id="bank-studied">0</span>
+                            <span class="stat-label">已背</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-num" id="bank-mastered">0</span>
+                            <span class="stat-label">已掌握</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="action-row">
+                    <button class="action-btn study" onclick="App.startStudy()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        <span>全部背题</span>
+                    </button>
+                    <button class="action-btn practice" onclick="App.startPractice()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        <span>全部刷题</span>
+                    </button>
+                </div>
+                <div class="bank-info-card" style="padding:14px 16px;">
+                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px;">按题型分别进行</div>
+                    <div id="type-action-section"></div>
+                </div>
+                <div class="section-header">
+                    <h2>题目列表</h2>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button class="text-btn" onclick="App.aiBatchGenerateExplanations()">AI补全解析</button>
+                        <button class="text-btn" onclick="App.showAddQuestion()">+ 添加题目</button>
+                    </div>
+                </div>
+                <div id="question-list" class="question-list"></div>
+            </div>
+        </div>
+
+        <!-- ==================== 导入题库 ==================== -->
+        <div id="view-import" class="view">
+            <header class="app-header">
+                <button class="header-btn" onclick="App.backToHome()" aria-label="返回">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <h1 class="header-title">导入题库</h1>
+            </header>
+            <div class="content">
+                <div class="import-tabs">
+                    <button class="import-tab active" onclick="App.switchImportTab('paste')">粘贴文本</button>
+                    <button class="import-tab" onclick="App.switchImportTab('file')">导入文件</button>
+                </div>
+
+                <div id="import-paste-panel" class="import-panel active">
+                    <div class="form-group">
+                        <label class="form-label">题库名称</label>
+                        <input type="text" id="import-bank-name" class="form-input" placeholder="输入题库名称">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">题库描述（可选）</label>
+                        <input type="text" id="import-bank-desc" class="form-input" placeholder="输入题库描述">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">题目内容</label>
+                        <textarea id="import-text" class="form-textarea" placeholder="粘贴题目文本，支持自动识别题型&#10;&#10;示例格式：&#10;1. 题目内容？&#10;A. 选项A&#10;B. 选项B&#10;C. 选项C&#10;D. 选项D&#10;答案：A&#10;解析：解析内容"></textarea>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn-secondary" style="flex:1;min-width:140px;" onclick="App.aiFormatImportText()">AI 识别排版</button>
+                        <button class="btn-secondary" style="flex:1;min-width:140px;" onclick="App.handleImageUpload()">AI OCR 图片识题</button>
+                        <button class="btn-primary" style="flex:1;min-width:140px;" onclick="App.previewImport()">预览解析结果</button>
+                    </div>
+                    <input type="file" id="image-input" accept="image/*" capture="environment" style="display:none;" onchange="App.handleImageUpload(event)">
+                </div>
+
+                <div id="import-file-panel" class="import-panel">
+                    <div class="form-group">
+                        <label class="form-label">题库名称</label>
+                        <input type="text" id="import-file-bank-name" class="form-input" placeholder="输入题库名称">
+                    </div>
+                    <div class="file-upload-area" onclick="document.getElementById('file-input').click()">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <p>点击选择文件</p>
+                        <p class="file-hint">支持 .txt / .docx / .doc / .pdf / .xlsx / .xls / .csv</p>
+                        <input type="file" id="file-input" accept=".txt,.text,.docx,.doc,.pdf,.xlsx,.xls,.csv" style="display:none;" onchange="App.handleFileUpload(event)">
+                    </div>
+                    <div id="file-content-area" style="display:none;">
+                        <div class="form-group">
+                            <label class="form-label">已提取文本预览</label>
+                            <textarea id="file-text" class="form-textarea" placeholder="文档提取出的文本将显示在这里"></textarea>
+                        </div>
+                        <p class="file-hint" id="file-parse-status" style="margin-bottom:12px;">上传后会先自动提取文本，再送入题目解析器</p>
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn-secondary" style="flex:1;" onclick="App.aiFormatFileText()">AI 识别排版</button>
+                            <button class="btn-primary" style="flex:1;" onclick="App.previewFileImport()">预览解析结果</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="import-preview" class="import-preview" style="display:none;">
+                    <div class="preview-header">
+                        <h3 id="preview-title">解析结果</h3>
+                        <span id="preview-count" class="preview-count"></span>
+                    </div>
+                    <div id="preview-list" class="preview-list"></div>
+                    <div class="import-actions">
+                        <button class="btn-secondary" onclick="App.cancelImport()">取消</button>
+                        <button class="btn-primary" onclick="App.confirmImport()">确认导入</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 背题模式 ==================== -->
+        <div id="view-study" class="view">
+            <header class="app-header">
+                <button class="header-btn" onclick="App.exitStudy()" aria-label="退出">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+                <h1 class="header-title">背题模式</h1>
+                <button class="header-btn" onclick="App.toggleStudySettings()" aria-label="设置">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
+            </header>
+            <div class="content study-content">
+                <div class="study-progress-bar">
+                    <div class="progress-info">
+                        <span id="study-progress-text">0 / 0</span>
+                        <span id="study-percent">0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="study-progress-fill" class="progress-fill" style="width:0%"></div>
+                    </div>
+                </div>
+                <div class="flashcard-container">
+                    <div id="flashcard" class="flashcard flashcard-static">
+                        <span class="question-type-badge" id="study-q-type"></span>
+                        <div class="flashcard-q" id="study-question"></div>
+                        <div id="study-options" class="study-options"></div>
+                        <div class="answer-label">正确答案</div>
+                        <div class="flashcard-answer" id="study-answer"></div>
+                        <div class="explanation-label">解析</div>
+                        <div class="flashcard-explanation" id="study-explanation"></div>
+                    </div>
+                </div>
+                <div class="study-controls">
+                    <button class="study-nav-btn" onclick="App.prevStudyCard()" aria-label="上一题">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <button class="study-mark-btn" id="study-mark-btn" onclick="App.toggleMastered()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span id="study-mark-text">标记掌握</span>
+                    </button>
+                    <button class="study-nav-btn" onclick="App.nextStudyCard()" aria-label="下一题">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 刷题模式 ==================== -->
+        <div id="view-practice" class="view">
+            <header class="app-header">
+                <button class="header-btn" onclick="App.exitPractice()" aria-label="退出">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+                <h1 class="header-title">刷题模式</h1>
+                <span class="header-score" id="practice-score">0分</span>
+            </header>
+            <div class="content practice-content">
+                <div class="practice-progress-bar">
+                    <div class="progress-info">
+                        <span id="practice-progress-text">第 0 题 / 共 0 题</span>
+                        <span id="practice-correct-rate">正确率 0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="practice-progress-fill" class="progress-fill" style="width:0%"></div>
+                    </div>
+                </div>
+                <div class="practice-card">
+                    <div class="practice-toolbar">
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <span class="question-type-badge" id="practice-q-type"></span>
+                            <span id="practice-favorite-mode-tag" class="question-item-type single" style="display:none;">收藏练习</span>
+                        </div>
+                        <div class="practice-toolbar-actions">
+                            <button class="toolbar-chip" id="practice-favorite-btn" onclick="App.togglePracticeFavorite()">☆ 收藏</button>
+                            <button class="toolbar-chip" id="practice-error-btn" onclick="App.addCurrentToErrorBook()">＋ 错题本</button>
+                            <button class="toolbar-chip" id="practice-save-btn" onclick="App.savePracticeProgress(false)">💾 保存</button>
+                        </div>
+                    </div>
+                    <div class="practice-question" id="practice-question"></div>
+                    <div id="practice-options" class="practice-options"></div>
+                    <div id="practice-feedback" class="practice-feedback" style="display:none;">
+                        <div class="feedback-answer">
+                            <span class="feedback-label">正确答案：</span>
+                            <span id="practice-correct-answer"></span>
+                        </div>
+                        <div class="feedback-explanation">
+                            <span class="feedback-label">解析：</span>
+                            <span id="practice-explanation"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-controls practice-controls-top">
+                    <button class="btn-secondary practice-btn" id="practice-prev-btn" onclick="App.practicePrev()">上一题</button>
+                    <button class="btn-secondary practice-btn" id="practice-skip-btn" onclick="App.practiceSkip()">跳过</button>
+                    <button class="btn-primary practice-btn" id="practice-next-btn" onclick="App.practiceNext()" style="display:none;">下一题</button>
+                    <button class="btn-primary practice-btn" id="practice-submit-btn" onclick="App.practiceSubmit()">提交</button>
+                </div>
+                <div class="practice-controls practice-controls-bottom">
+                    <button class="btn-secondary practice-btn" id="practice-save-bottom-btn" onclick="App.savePracticeProgress(true)">保存并退出</button>
+                    <button class="btn-primary practice-btn" id="practice-next-direct-btn" onclick="App.practiceNextDirect()">下一题</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 刷题结果 ==================== -->
+        <div id="view-practice-result" class="view">
+            <header class="app-header">
+                <h1 class="header-title">练习结果</h1>
+            </header>
+            <div class="content result-content">
+                <div class="result-circle">
+                    <svg width="160" height="160" viewBox="0 0 160 160">
+                        <circle cx="80" cy="80" r="70" fill="none" stroke="#e5e7eb" stroke-width="12"/>
+                        <circle id="result-circle-fill" cx="80" cy="80" r="70" fill="none" stroke="#6366f1" stroke-width="12" stroke-linecap="round" transform="rotate(-90 80 80)" stroke-dasharray="440" stroke-dashoffset="440"/>
+                    </svg>
+                    <div class="result-score">
+                        <span id="result-score-num">0</span>
+                        <span class="result-score-unit">分</span>
+                    </div>
+                </div>
+                <div class="result-stats">
+                    <div class="result-stat-item">
+                        <span class="result-stat-num" id="result-total">0</span>
+                        <span class="result-stat-label">总题数</span>
+                    </div>
+                    <div class="result-stat-item correct">
+                        <span class="result-stat-num" id="result-correct">0</span>
+                        <span class="result-stat-label">答对</span>
+                    </div>
+                    <div class="result-stat-item wrong">
+                        <span class="result-stat-num" id="result-wrong">0</span>
+                        <span class="result-stat-label">答错</span>
+                    </div>
+                    <div class="result-stat-item skip">
+                        <span class="result-stat-num" id="result-skip">0</span>
+                        <span class="result-stat-label">跳过</span>
+                    </div>
+                </div>
+                <div class="result-actions">
+                    <button class="btn-secondary" onclick="App.backToHome()">返回首页</button>
+                    <button class="btn-primary" onclick="App.practiceWrongOnly()">只练错题</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 收藏夹 ==================== -->
+        <div id="view-favorites" class="view">
+            <header class="app-header">
+                <h1 class="header-title">收藏夹</h1>
+                <button class="header-btn" onclick="App.startFavoritePractice()" aria-label="练习收藏题">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </button>
+            </header>
+            <div class="content">
+                <div class="error-filter-bar">
+                    <div class="form-hint" style="flex:1;margin-top:0;align-self:center;">汇总所有题库已收藏题目，可直接进入练习或取消收藏</div>
+                    <button class="btn-primary error-practice-btn" onclick="App.startFavoritePractice()">练习收藏</button>
+                </div>
+                <div id="favorite-list" class="error-list"></div>
+                <div id="favorite-empty" class="empty-state" style="display:none;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 17.27-5.18 3.05 1.64-5.81L3 9.76l6.02-.46L12 3.8l2.98 5.5 6.02.46-5.46 4.75 1.64 5.81z"/></svg>
+                    <p>暂无收藏题目</p>
+                    <p class="empty-sub">在刷题模式点击“收藏”后，会显示在这里</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 错题本 ==================== -->
+        <div id="view-error-book" class="view">
+            <header class="app-header">
+                <h1 class="header-title">错题本</h1>
+                <button class="header-btn" onclick="App.clearAllErrors()" aria-label="清空">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </header>
+            <div class="content">
+                <div class="error-filter-bar">
+                    <select id="error-filter-bank" class="filter-select" onchange="App.filterErrors()">
+                        <option value="">全部题库</option>
+                    </select>
+                    <button class="btn-primary error-practice-btn" onclick="App.startErrorPractice()">练习错题</button>
+                </div>
+                <div id="error-list" class="error-list"></div>
+                <div id="error-empty" class="empty-state" style="display:none;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    <p>暂无错题</p>
+                    <p class="empty-sub">刷题时答错的题目会自动加入错题本</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 统计 ==================== -->
+        <div id="view-stats" class="view">
+            <header class="app-header">
+                <h1 class="header-title">学习统计</h1>
+            </header>
+            <div class="content">
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-card-icon blue">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        </div>
+                        <div class="stat-card-info">
+                            <span class="stat-card-num" id="stats-total-q">0</span>
+                            <span class="stat-card-label">总题目数</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon green">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="stat-card-info">
+                            <span class="stat-card-num" id="stats-mastered">0</span>
+                            <span class="stat-card-label">已掌握</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon orange">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        </div>
+                        <div class="stat-card-info">
+                            <span class="stat-card-num" id="stats-practiced">0</span>
+                            <span class="stat-card-label">累计刷题</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon red">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </div>
+                        <div class="stat-card-info">
+                            <span class="stat-card-num" id="stats-errors">0</span>
+                            <span class="stat-card-label">错题数</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon blue">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h12"/></svg>
+                        </div>
+                        <div class="stat-card-info">
+                            <span class="stat-card-num" id="stats-overall-rate">0%</span>
+                            <span class="stat-card-label">综合正确率</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-header">
+                    <h2>题库概览</h2>
+                </div>
+                <div id="stats-bank-list" class="stats-bank-list"></div>
+                <div class="section-header">
+                    <h2>正确率趋势</h2>
+                </div>
+                <div id="stats-chart" class="stats-chart"></div>
+            </div>
+        </div>
+
+        <!-- ==================== 设置 ==================== -->
+        <div id="view-settings" class="view">
+            <header class="app-header">
+                <h1 class="header-title">设置</h1>
+            </header>
+            <div class="content">
+                <div class="settings-group">
+                    <div class="settings-group-title">学习设置</div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">背题乱序</span>
+                            <span class="settings-item-desc">背题时随机打乱题目顺序</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-study-shuffle" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">刷题乱序</span>
+                            <span class="settings-item-desc">刷题时随机打乱题目顺序</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-practice-shuffle" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">选项乱序</span>
+                            <span class="settings-item-desc">刷题时随机打乱选项顺序</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-option-shuffle" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">自动加入错题本</span>
+                            <span class="settings-item-desc">答错时自动添加到错题本</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-auto-error" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">显示解析</span>
+                            <span class="settings-item-desc">刷题时显示答案解析</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-show-explanation" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <div class="settings-group-title">AI 设置</div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">启用 AI 功能</span>
+                            <span class="settings-item-desc">用于题目识别排版、AI 解析和补全</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-ai-enabled" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">AI Base URL</label>
+                        <input type="text" id="setting-ai-base-url" class="form-input" placeholder="例如：https://api.openai.com/v1" onchange="App.updateSettings()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">AI API Key</label>
+                        <input type="password" id="setting-ai-api-key" class="form-input" placeholder="输入你的 API Key" onchange="App.updateSettings()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">AI 模型</label>
+                        <input type="text" id="setting-ai-model" class="form-input" placeholder="例如：gpt-4o-mini" onchange="App.updateSettings()">
+                    </div>
+                    <div style="display:flex;gap:10px;margin-bottom:14px;">
+                        <button class="btn-secondary" style="flex:1;" onclick="App.testAiConnection()">测试 AI 接口</button>
+                    </div>
+                    <div id="ai-test-result" class="form-hint" style="margin-bottom:12px;"></div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">导入时优先用 AI</span>
+                            <span class="settings-item-desc">先用 AI 识别题目结构与排版，再导入</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-ai-use-import" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">允许 AI 生成解析</span>
+                            <span class="settings-item-desc">题目无解析时可自动补全解析</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-ai-use-explanation" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">导入后批量补全解析</span>
+                            <span class="settings-item-desc">导入成功后自动为无解析题补齐 AI 解析</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-ai-auto-explain-import" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">主观题 AI 判分</span>
+                            <span class="settings-item-desc">填空题/简答题启用语义判分，不只做字符串比对</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-ai-subjective-grade" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">AI 失败自动回退</span>
+                            <span class="settings-item-desc">AI 出错时回退到普通解析，不阻塞导入和刷题</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-ai-auto-fallback" onchange="App.updateSettings()">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <div class="settings-group-title">数据管理</div>
+                    <div class="settings-item clickable" onclick="App.exportData()">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">导出数据</span>
+                            <span class="settings-item-desc">导出所有题库数据为文件</span>
+                        </div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                    <div class="settings-item clickable" onclick="App.importData()">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">导入数据</span>
+                            <span class="settings-item-desc">从备份文件恢复数据</span>
+                        </div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                    <div class="settings-item clickable danger" onclick="App.clearAllData()">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label">清空所有数据</span>
+                            <span class="settings-item-desc">删除所有题库和记录</span>
+                        </div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                </div>
+                <div class="app-info">
+                    <p>题库大师 v1.0.0</p>
+                    <p>智能刷题背题神器</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 编辑题目 ==================== -->
+        <div id="view-edit-question" class="view">
+            <header class="app-header">
+                <button class="header-btn" onclick="App.cancelEditQuestion()" aria-label="取消">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+                <h1 class="header-title" id="edit-q-title">添加题目</h1>
+                <button class="header-btn" onclick="App.saveQuestion()" aria-label="保存">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+            </header>
+            <div class="content">
+                <div class="form-group">
+                    <label class="form-label">题型</label>
+                    <select id="edit-q-type" class="form-input" onchange="App.onQuestionTypeChange()">
+                        <option value="single">单选题</option>
+                        <option value="multiple">多选题</option>
+                        <option value="truefalse">判断题</option>
+                        <option value="fillblank">填空题</option>
+                        <option value="shortanswer">简答题</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">题目内容</label>
+                    <textarea id="edit-q-content" class="form-textarea" placeholder="输入题目内容"></textarea>
+                </div>
+                <div id="edit-options-area">
+                    <label class="form-label">选项</label>
+                    <div id="edit-options-list"></div>
+                    <button class="add-option-btn" id="add-option-btn" onclick="App.addOption()">+ 添加选项</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">正确答案</label>
+                    <input type="text" id="edit-q-answer" class="form-input" placeholder="输入正确答案">
+                    <div id="answer-hint" class="form-hint"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">解析（可选）</label>
+                    <textarea id="edit-q-explanation" class="form-textarea" placeholder="输入解析内容"></textarea>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn-secondary" style="flex:1;" onclick="App.aiGenerateExplanation()">AI 生成解析</button>
+                    <button class="btn-secondary" style="flex:1;" onclick="App.aiFormatCurrentQuestion()">AI 识别题目</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 底部导航 ==================== -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-view="home" onclick="App.navigate('home')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>题库</span>
+            </button>
+            <button class="nav-item" data-view="favorites" onclick="App.navigate('favorites')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 17.27-5.18 3.05 1.64-5.81L3 9.76l6.02-.46L12 3.8l2.98 5.5 6.02.46-5.46 4.75 1.64 5.81z"/></svg>
+                <span>收藏夹</span>
+            </button>
+            <button class="nav-item" data-view="error-book" onclick="App.navigate('error-book')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                <span>错题本</span>
+            </button>
+            <button class="nav-item" data-view="stats" onclick="App.navigate('stats')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <span>统计</span>
+            </button>
+            <button class="nav-item" data-view="settings" onclick="App.navigate('settings')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>设置</span>
+            </button>
+        </nav>
+
+        <!-- ==================== 模态框 ==================== -->
+        <div id="modal-overlay" class="modal-overlay" style="display:none;" onclick="App.closeModal(event)">
+            <div id="modal-content" class="modal-content"></div>
+        </div>
+
+        <!-- ==================== Toast ==================== -->
+        <div id="toast" class="toast" style="display:none;"></div>
+
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/parser.js"></script>
+    <script src="js/libs/mammoth.browser.min.js"></script>
+    <script src="js/libs/xlsx.full.min.js"></script>
+    <script src="js/libs/pdf.min.js"></script>
+    <script src="js/fileparser.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // 注册 Service Worker（PWA离线支持）
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').catch(function(e) {
+                    console.log('SW registration failed:', e);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

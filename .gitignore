@@ -1,0 +1,5 @@
+# WorkBuddy project metadata (local only)
+.workbuddy/
+
+# Binary archive (not source)
+*.zip
